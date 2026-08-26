@@ -1,0 +1,54 @@
+name: Import Beautijoo Frontend
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Import frontend from source repository
+        run: |
+          set -e
+          git clone --depth 1 https://github.com/tajvidimaryam7899-del/grokrepositorybeautijoo.git /tmp/source
+          rm -rf app components contexts lib types public
+          rm -f .env.example .gitignore eslint.config.mjs next-env.d.ts next.config.ts package.json postcss.config.mjs tsconfig.json
+          cp -a /tmp/source/frontend/. .
+          rm -rf .git .github
+          mkdir -p .github/workflows
+          cat > .github/workflows/import-frontend.yml <<'EOF'
+name: Import Beautijoo Frontend
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No-op after import
+        run: echo "Frontend import complete"
+EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Import frontend from source repository" || exit 0
+          git push
